@@ -3,19 +3,23 @@ package com.apiintegration.apiintegration.Controller;
 import com.apiintegration.apiintegration.Entities.Customer;
 import com.apiintegration.apiintegration.Entities.User;
 import com.apiintegration.apiintegration.Service.WebClientService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
+
+import java.util.List;
 
 @Controller("/")
 public class MainController {
 
     @Autowired
     private WebClientService webClientService;
+
+    @RequestMapping("/")
+    public String red() {
+        return "redirect:/login";
+    }
 
     @GetMapping("/login")
     public ModelAndView showLoginForm() {
@@ -25,37 +29,69 @@ public class MainController {
         return mav;
     }
 
-    @PostMapping("/loginget")
-    public ModelAndView loginHandler(@ModelAttribute("user") User user) throws JsonProcessingException {
-        User user2 = new User("test@sunbasedata.com", "Test@123");
-        webClientService.fetchAccessToken(user2);
-                Customer customer = Customer.builder()
-                .first_name("first_name").last_name("last_name")
-                .address("address").state("state")
-                .city("city").phone("4456").street("street").email("sda")
-                .build();
-        System.out.println(webClientService.updateCustomer("test0c42ceaad3fd4cf98881b6b00613cdad", customer));
-
-//        Customer c = Customer.builder()
-//                .first_name("Test").last_name("test")
-//                .address("del").state("del")
-//                .city("de").phone("4").street("sds").email("sda")
-//                .build();
-//
-//        System.out.println(webClientService.createCustomer(c));
-//        System.out.println((new Customer().builder().first_name("Test").last_name("test").build()));
-//        System.out.println(webClientService.createCustomer(new Customer().builder().last_name("test").build()));
-//
-//        "login_id" : "test@sunbasedata.com",
-//                "password" :"Test@123"
-//    }https://qa2.sunbasedata.com/sunbase/portal/api/assignment.jsp
-
-    ModelAndView mav = new ModelAndView("");
-        if (true) {
-            // resp 200
-            mav.setViewName(""); //to all view
+    @PostMapping("/login-verify")
+    public String verifyLogin(@ModelAttribute("user") User user) {
+        try {
+            webClientService.fetchAccessToken(user);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "redirect:/login";
         }
+        return "redirect:/view-all";
+    }
+
+    @GetMapping("view-all")
+    public ModelAndView getAllCustomer() {
+        ModelAndView mav = new ModelAndView("viewAll");
+        List<Customer> allCustomers = webClientService.getAllCustomer();
+        mav.addObject("allCustomers", allCustomers);
         return mav;
+    }
+
+    @GetMapping("delete-customer")
+    public String deleteCustomer(@RequestParam(name = "uuid") String uuid) {
+        try {
+            webClientService.deleteCustomer(uuid);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "redirect:/view-all";
+    }
+
+    @GetMapping("get-customer-details")
+    public ModelAndView addCustomerForm() {
+        ModelAndView mav = new ModelAndView("addCustomer");
+        mav.addObject("customer", new Customer());
+        return mav;
+    }
+
+    @PostMapping("add-customer")
+    public String addCustomer(@ModelAttribute("customer") Customer customer) {
+        try {
+            webClientService.createCustomer(customer);
+        } catch (Exception e) {
+            e.getMessage();
+        }
+        return "redirect:/view-all";
+    }
+
+    @GetMapping("update-customer-details")
+    public ModelAndView updateCustomerForm(@RequestParam(name = "uuid") String uuid) {
+        ModelAndView mav = new ModelAndView("updateCustomer");
+        Customer customer = new Customer();
+        customer.setUuid(uuid);
+        mav.addObject("customer", customer);
+        return mav;
+    }
+
+    @PostMapping("update-customer")
+    public String updateCustomer(@ModelAttribute("customer") Customer customer) {
+        try {
+            webClientService.updateCustomer(customer.getUuid(), customer);
+        } catch (Exception e) {
+            e.getMessage();
+        }
+        return "redirect:/view-all";
     }
 
 }

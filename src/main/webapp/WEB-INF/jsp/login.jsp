@@ -10,13 +10,12 @@
   </head>
 
   <body>
-      <form:form method="POST" action="/loginget" modelAttribute="user">
+      <form:form method="POST" action="/login-verify" modelAttribute="user">
             <span>Login Page</span> <br />
-            <form:input name="username" type="text" placeholder="login id" autofocus="true" path="userID" /> <br
+            <form:input name="username" type="text" placeholder="login id" autofocus="true" path="login_id" /> <br
             />
-            <form:input name="password" type="text" placeholder="Password" path="userPassword" /> <br />
+            <form:input name="password" type="text" placeholder="Password" path="password" /> <br />
             <button type="submit">Log In</button>
-        </form:form>
-    </div>
+      </form:form>
   </body>
 </html>
