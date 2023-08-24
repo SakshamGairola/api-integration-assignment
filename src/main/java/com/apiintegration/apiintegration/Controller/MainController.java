@@ -1,8 +1,10 @@
 package com.apiintegration.apiintegration.Controller;
 
+import com.apiintegration.apiintegration.Entities.AccessToken;
 import com.apiintegration.apiintegration.Entities.Customer;
 import com.apiintegration.apiintegration.Entities.User;
 import com.apiintegration.apiintegration.Service.WebClientService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +17,11 @@ public class MainController {
 
     @Autowired
     private WebClientService webClientService;
+
+    AccessToken accessToken;
+
+    @Autowired
+    ObjectMapper mapper;
 
     @RequestMapping("/")
     public String red() {
@@ -31,8 +38,12 @@ public class MainController {
 
     @PostMapping("/login-verify")
     public String verifyLogin(@ModelAttribute("user") User user) {
+        String accessTokenJson;
         try {
-            webClientService.fetchAccessToken(user);
+            accessTokenJson = webClientService.fetchAccessToken(user);
+            accessToken = mapper.readValue(accessTokenJson, AccessToken.class);
+            accessToken.setAccess_token("Bearer " + accessToken.getAccess_token());
+            System.out.println(accessTokenJson);
         } catch (Exception e) {
             e.printStackTrace();
             return "redirect:/login";
@@ -43,7 +54,7 @@ public class MainController {
     @GetMapping("view-all")
     public ModelAndView getAllCustomer() {
         ModelAndView mav = new ModelAndView("viewAll");
-        List<Customer> allCustomers = webClientService.getAllCustomer();
+        List<Customer> allCustomers = webClientService.getAllCustomer(accessToken);
         mav.addObject("allCustomers", allCustomers);
         return mav;
     }
@@ -51,7 +62,7 @@ public class MainController {
     @GetMapping("delete-customer")
     public String deleteCustomer(@RequestParam(name = "uuid") String uuid) {
         try {
-            webClientService.deleteCustomer(uuid);
+            webClientService.deleteCustomer(uuid, accessToken);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -68,7 +79,7 @@ public class MainController {
     @PostMapping("add-customer")
     public String addCustomer(@ModelAttribute("customer") Customer customer) {
         try {
-            webClientService.createCustomer(customer);
+            webClientService.createCustomer(customer, accessToken);
         } catch (Exception e) {
             e.getMessage();
         }
@@ -87,7 +98,7 @@ public class MainController {
     @PostMapping("update-customer")
     public String updateCustomer(@ModelAttribute("customer") Customer customer) {
         try {
-            webClientService.updateCustomer(customer.getUuid(), customer);
+            webClientService.updateCustomer(customer.getUuid(), customer, accessToken);
         } catch (Exception e) {
             e.getMessage();
         }
